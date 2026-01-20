@@ -1,5 +1,5 @@
 {
-  "name": "HIREFLOW_Applicant_Tracking_System",
+  "name": "HIREFLOW_n8n_Workflow",
   "nodes": [
     {
       "parameters": {
@@ -297,7 +297,7 @@
       "credentials": {
         "googleDriveOAuth2Api": {
           "id": "xbZtGkxomu83DzA6",
-          "name": "GD Swaraj 1"
+          "name": "GD Swaraj "
         }
       }
     },
@@ -323,7 +323,7 @@
       "credentials": {
         "gmailOAuth2": {
           "id": "UYZ1Un9d3AMyMGb1",
-          "name": "Gmail swaraj 1"
+          "name": "Gmail swaraj "
         }
       }
     },
