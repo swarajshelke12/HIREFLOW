@@ -1,0 +1,1356 @@
+{
+  "name": "AiPowered_Applicant_Tracking_System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hireflow-apply",
+        "options": {}
+      },
+      "id": "04b78578-31ac-4738-af58-262fa166df14",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        888
+      ],
+      "webhookId": "f9cafbad-d647-4ca4-8d6a-200c0083e6e2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this resume and provide a hiring score out of 100: {{ $json.final_resume_text }}\nEmail: {{ $('Webhook').item.json.body.email }}",
+        "options": {
+          "systemMessage": "=### ROLE\nYou are a \"Senior Engineering Manager\" hiring for an AI & Automation Specalist - Learning & design team.\nYour goal is to find smart, capable engineers, not just match keywords. You value \"Transferable Skills\"—if a candidate is strong in one language, assume they can learn others.\n\n### INPUT RESUME\n\"\"\"\n{{ $json.final_resume_text }}\n\"\"\"\n\n### SCORING GUIDELINES (Total 100)\nEvaluate the candidate based on these 3 pillars. Be generous if they show high potential.\n\n1. **Technical Proficiency (0-40 points):**\n   - *Perfect Fit:* Python, JavaScript, n8n, Automation tools.\n   - *Good Fit:* Strong experience in Java, C++, Go, or Backend Web Dev (These candidates can learn Python/AI easily).\n   - *Look for:* Logical thinking, complexity of projects, and coding fundamentals.\n\n2. **Communication & \"Design Sense\" (0-30 points):**\n   - *Perfect Fit:* Content creation, public speaking, UI/UX design experience.\n   - *Good Fit:* Technical writing, leadership roles, teaching assistants, or a very well-structured/clean resume.\n   - *Goal:* Can this person explain complex AI concepts to a non-technical client?\n\n3. **\"Builder\" Mindset (0-30 points):**\n   - Look for: Completed side projects, freelance work, hackathons, or internships.\n   - *Bonus:* Did they build something that solves a real problem? (Even if it's not AI-related).\n\n*Note: Ignore irrelevant hobbies (e.g., sports) unless they demonstrate leadership/teamwork relevant to a tech role.*\n\n### MANDATORY OUTPUT FORMAT\nReturn ONLY a valid JSON object. No markdown.\n{\n  \"candidate_name\": \"Full Name\",\n  \"candidate_email\": \"Email Address (or null)\",\n  \"hiring_score\": (Integer 0-100),\n  \"recommendation\": \"Strictly choose one value: 'Interview' OR 'Review' OR 'Reject'\",\n  \"key_insights\": [\n    \"Insight 1 (Top Technical Strength)\",\n    \"Insight 2 (Communication/Soft Skill)\",\n    \"Insight 3 (Gap or Area for Growth)\"\n  ],\n  \"email_feedback\": \"If score is below 45 (Reject), write a helpful, 2-sentence explanation. FIRST sentence: Compliment a specific strength/project they have. SECOND sentence: Explain the technical gap (e.g., 'While your Java background is strong, we need someone with immediate proficiency in Python automation workflows.'). NEVER mention the score.\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        432,
+        608
+      ],
+      "id": "65ddc24e-1208-4e70-8189-5d102330ae27",
+      "name": "Agent for PDF reviews"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "60d96269-8b50-4f24-9d0c-7e3f1d6cb118",
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -720,
+        784
+      ],
+      "id": "f041f2e7-e36e-4338-afea-f102dc3b6a77",
+      "name": "Pdf or not?"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this resume and provide a hiring score out of 100: \nEmail: {{ $('Webhook').item.json.body.email }}\nText: {{ $json.ParsedResults[0].ParsedText }}",
+        "options": {
+          "systemMessage": "=### ROLE\nYou are a \"Senior Engineering Manager\" hiring for an AI & Automation Specalist - Learning & design team.\nAnalyze the OCR (Optical Character Recognition) text from a candidate's scanned resume.\nYour goal is to find smart, capable engineers, not just match keywords. You value \"Transferable Skills\"—if a candidate is strong in one language, assume they can learn others.\n\n### INPUT OCR TEXT\n\"\"\"\n{{ $json.ParsedResults[0].ParsedText }}\n\"\"\"\n(Note: This text may have scanning errors. Auto-correct them contextually. e.g., read \"Pyth0n\" as \"Python\".)\n\n### SCORING GUIDELINES (Total 100)\nEvaluate the candidate based on these 3 pillars. Be generous if they show high potential.\n\n1. **Technical Proficiency (0-40 points):**\n   - *Perfect Fit:* Python, JavaScript, n8n, Automation tools.\n   - *Good Fit:* Strong experience in Java, C++, Go, or Backend Web Dev (These candidates can learn Python/AI easily).\n   - *Look for:* Logical thinking, complexity of projects, and coding fundamentals.\n\n2. **Communication & \"Design Sense\" (0-30 points):**\n   - *Perfect Fit:* Content creation, public speaking, UI/UX design experience.\n   - *Good Fit:* Technical writing, leadership roles, teaching assistants, or a very well-structured/clean resume.\n   - *Goal:* Can this person explain complex AI concepts to a non-technical client?\n\n3. **\"Builder\" Mindset (0-30 points):**\n   - Look for: Completed side projects, freelance work, hackathons, or internships.\n   - *Bonus:* Did they build something that solves a real problem? (Even if it's not AI-related).\n\n*Note: Ignore irrelevant hobbies (e.g., sports) unless they demonstrate leadership/teamwork relevant to a tech role.*\n\n### MANDATORY OUTPUT FORMAT\nReturn ONLY a valid JSON object. No markdown.\n{\n  \"candidate_name\": \"Full Name\",\n  \"candidate_email\": \"Email Address (or null)\",\n  \"hiring_score\": (Integer 0-100),\n  \"recommendation\": \"Strictly choose one value: 'Interview' OR 'Review' OR 'Reject'\",\n  \"key_insights\": [\n    \"Insight 1 (Top Technical Strength)\",\n    \"Insight 2 (Communication/Soft Skill)\",\n    \"Insight 3 (Gap or Area for Growth)\"\n  ],\n  \"email_feedback\": \"If score is below 45 (Reject), write a helpful, 2-sentence explanation. FIRST sentence: Compliment a specific strength/project they have. SECOND sentence: Explain the technical gap (e.g., 'While your Java background is strong, we need someone with immediate proficiency in Python automation workflows.'). NEVER mention the score.\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        80,
+        1008
+      ],
+      "id": "123a1f2e-6de9-4a99-bbab-8e20e7ffd270",
+      "name": "Agent for image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ocr.space/parse/image",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "File",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "apikey",
+              "value": "K87777371888957"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -192,
+        1008
+      ],
+      "id": "c8c65c02-164a-4fea-aa4a-dbdf67379e14",
+      "name": "Image analyze"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        432
+      ],
+      "id": "b723128c-5729-4b5c-b336-ac69215dd8af",
+      "name": "Extract from PDF"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        352,
+        816
+      ],
+      "id": "e4a03ba7-7454-407e-a78e-6b569b4fe083",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "zIEhPVGfK1pbN5F3",
+          "name": "Groq api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=You are an advanced Resume OCR & Parsing System. Your goal is to extract 100% of the text from this resume image into a structured Markdown format.\n\n**CRITICAL EXTRACTION RULES:**\n1. **Capture Everything:** Transcribe every single detail, including headers, footers, sidebars, and small captions. Do not summarize or omit anything.\n2. **Handle Layouts Smartly:** If the resume has a 2-column layout (e.g., Skills on the left, Experience on the right), process them as separate logical sections. Do not mix the lines together.\n3. **Spot the \"Potential\" Signals:** Pay extreme attention to URLs (GitHub, LinkedIn, Portfolio), metrics (e.g., \"1Content Creation\", \"Teacher\",\"Educator\"), and \"Projects\" sections. These are crucial for scoring.\n4. **Technical Precision:** Ensure tool names like \"n8n\", \"Python\", \"API\", and \"Ai related Keywords\" are transcribed exactly without spelling correction.\n\n**OUTPUT:** Provide the full, raw content of the resume in clean Markdown.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        528
+      ],
+      "id": "af736319-a091-4774-9649-9d2429305c61",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "VRPkwPfjgRKlEPH4",
+          "name": "Google Gemini(PaLM) api 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -208,
+        720
+      ],
+      "id": "c9d0d9f6-76de-4c6b-9597-e7dcff96e72c",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Takes the text found by the PDF extractor\nreturn {\n  json: {\n    final_resume_text: $input.item.json.text\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        336
+      ],
+      "id": "7dfe22cb-728a-4740-a268-c0cbef83c5fa",
+      "name": "Normalize the text"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Takes the text found by Gemini Vision\nreturn {\n  json: {\n    final_resume_text: $input.item.json.content.parts[0].text\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        720
+      ],
+      "id": "14cc537e-b84d-49cf-a95d-a867fe0b6c6d",
+      "name": "Normalize the text of gemini"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        256,
+        464
+      ],
+      "id": "512d9308-e9c2-4904-923c-9e9c3a819e9e",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get raw text from the AI Agent node\nlet aiText = $input.first().json.output || $input.first().json.response;\n\n// 2. GET USER DATA FROM WEBHOOK\nconst submittedName = $('Webhook').first().json.body.name || \"Unknown Candidate\";\nconst submittedEmail = $('Webhook').first().json.body.email || \"No Email\";\nconst submittedPhone = $('Webhook').first().json.body.phone || \"No Phone\";\n\n// 3. Extract JSON boundaries\nconst firstBrace = aiText.indexOf('{');\nconst lastBrace = aiText.lastIndexOf('}');\n\n// ERROR HANDLING\nif (firstBrace === -1 || lastBrace === -1) {\n  return {\n    \"Contact_Info\": `• Name: ${submittedName}\\n• Email: ${submittedEmail}\\n• Phone: ${submittedPhone}`,\n    \"Hiring_Score\": 0,\n    \"Recommendation\": \"Error\",\n    \"Insights\": \"• AI failed to produce valid JSON\",\n    \"Feedback\": \"\"\n  };\n}\n\n// 4. Parse AI Data\nlet cleanJson = aiText.substring(firstBrace, lastBrace + 1);\nlet aiData = {};\n\ntry {\n  aiData = JSON.parse(cleanJson.replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, \"\"));\n} catch (e) {\n    // FALLBACK: Manual extraction\n    const scoreMatch = cleanJson.match(/\"hiring_score\"\\s*:\\s*\"?(\\d+)\"?/);\n    const recMatch = cleanJson.match(/\"recommendation\"\\s*:\\s*\"([^\"]+)\"/);\n    const feedbackMatch = cleanJson.match(/\"email_feedback\"\\s*:\\s*\"([^\"]+)\"/);\n    \n    const insightSection = cleanJson.match(/\"key_insights\"\\s*:\\s*\\[([\\s\\S]*?)\\]/);\n    let extractedInsights = [];\n    if (insightSection && insightSection[1]) {\n        extractedInsights = insightSection[1]\n            .split(/\",\"|\",\\s*\"/)\n            .map(item => item.replace(/[\\[\\]\"']/g, \"\").trim())\n            .filter(item => item.length > 3);\n    }\n\n    aiData = {\n        hiring_score: scoreMatch ? scoreMatch[1] : 0,\n        recommendation: recMatch ? recMatch[1] : \"Review Required\",\n        key_insights: extractedInsights.length > 0 ? extractedInsights : [\"Could not format insights automatically\"],\n        email_feedback: feedbackMatch ? feedbackMatch[1] : \"\"\n    };\n}\n\n// 5. Format Insights\nlet rawInsights = aiData.key_insights || aiData.insights || [];\nlet formattedInsights = \"\";\nif (Array.isArray(rawInsights)) {\n    formattedInsights = rawInsights.map(i => `• ${i}`).join('\\n');\n} else {\n    formattedInsights = rawInsights.split('. ').map(i => `• ${i.trim()}`).join('\\n');\n}\n\n// 6. CREATE THE \"CONTACT INFO\" BLOCK\nconst formattedContactInfo = `• Name: ${submittedName}\\n• Email: ${submittedEmail}\\n• Phone: ${submittedPhone}`;\n\n\n// --- INTELLIGENT FEEDBACK FIX ---\nlet finalScore = parseInt(aiData.hiring_score) || 0;\nlet finalRecommendation = aiData.recommendation || \"Review\";\nlet finalFeedback = aiData.email_feedback || \"\";\n\n// If score is less than 45, FORCE REJECT\nif (finalScore < 45) {\n    finalRecommendation = \"Reject\";\n    \n    // Check if AI provided good feedback. If not, generate it from the \"Gap Insight\".\n    if (!finalFeedback || finalFeedback.length < 5) {\n        \n        let gapInsight = \"\";\n        // Try to grab the last insight (usually the gap/missing skill)\n        if (Array.isArray(rawInsights) && rawInsights.length > 0) {\n             gapInsight = rawInsights[rawInsights.length - 1]; \n        }\n        \n        if (gapInsight && gapInsight.length > 5) {\n             // 1. Remove parentheses (e.g., \"(Basic level)\")\n             let cleanGap = gapInsight.replace(/[()]/g, '');\n             \n             // 2. CRITICAL FIX: Remove negative prefixes like \"Lack of\", \"No\", \"Missing\"\n             // This turns \"Lack of Python\" into just \"Python\"\n             cleanGap = cleanGap.replace(/^(Lack of|No|Missing|Limited|Gap in)\\s+/i, '');\n\n             // 3. Construct the clean sentence\n             finalFeedback = `While your background is impressive, we are currently prioritizing candidates with stronger experience in ${cleanGap}.`;\n        } else {\n             finalFeedback = \"At this time, we are seeking candidates whose specific technical experience more closely aligns with the immediate requirements of our current projects.\";\n        }\n    }\n}\n// ----------------------------------\n\n\n// 7. RETURN FINAL DATA\nreturn {\n  \"Contact_Info\": formattedContactInfo,\n  \"Hiring_Score\": finalScore,\n  \"Recommendation\": finalRecommendation,\n  \"Insights\": formattedInsights,\n  \"Feedback\": finalFeedback \n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        896
+      ],
+      "id": "aa1655e6-06ee-4a0b-b651-b6ac0f346ef9",
+      "name": "Final fields to add"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "resume",
+        "name": "=Resume of candidate: {{ $json.body.email }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Y8NyrWaT0JB_0OAI5NVWAfftyFjHxjoz",
+          "mode": "list",
+          "cachedResultName": "Resumes of candidates",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Y8NyrWaT0JB_0OAI5NVWAfftyFjHxjoz"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -912,
+        656
+      ],
+      "id": "a14f1540-6e18-40a8-b34d-12616eece3fe",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "xbZtGkxomu83DzA6",
+          "name": "GD Swaraj 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -880,
+        944
+      ],
+      "id": "469f25b8-7212-4577-b28a-b05c047017e3",
+      "name": "download binary",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "xbZtGkxomu83DzA6",
+          "name": "GD Swaraj 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.email }}",
+        "subject": "HIREFLOW_ATS - Thank you",
+        "message": "=<div style=\"font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6;\">\n    \n    <div style=\"border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px;\">\n        <h2 style=\"color: #000; margin: 0;\">HIRE<span style=\"color: #3b82f6;\">FLOW</span></h2>\n    </div>\n\n    <p>Hi <strong>{{ $('Webhook').item.json.body.name }}</strong>,</p>\n\n    <p>Thank you for giving us the opportunity to review your application for the <strong>AI & Automation Specialist</strong> role. We truly appreciate the time and effort you put into sharing your background with us.</p>\n\n    <div style=\"background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 0 4px 4px 0;\">\n        <p style=\"margin: 0; color: #475569; font-style: italic;\">\n            \"{{ $('All profile & sort profiles').item.json.Feedback }}\"\n        </p>\n    </div>\n\n    <p>Please understand that this decision is specific to our current needs. We encourage you to apply again in the future as you gain more experience in these specific areas.</p>\n\n    <p>We wish you the very best in your job search and future professional endeavors.</p>\n\n    <br>\n    <p style=\"margin-bottom: 0;\">Best regards,</p>\n    <p style=\"margin-top: 5px; font-weight: bold;\">The HireFlow Recruiting Team</p>\n\n    <div style=\"margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 12px; color: #999999; text-align: center;\">\n        <p>© 2026 HireFlow Systems. All rights reserved.</p>\n    </div>\n</div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        1056
+      ],
+      "id": "c151fbad-92cc-47de-b215-06c0ea6326b3",
+      "name": "Send a message",
+      "webhookId": "bdc13f47-f822-4d72-b2db-421dff804d0e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UYZ1Un9d3AMyMGb1",
+          "name": "Gmail swaraj 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY",
+          "mode": "list",
+          "cachedResultName": "Candidate Resume reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 857245978,
+          "mode": "list",
+          "cachedResultName": "interview candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit#gid=857245978"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Contact Information": "={{ $json.Contact_Info }}",
+            "Hiring_Score:": "={{ $json.Hiring_Score }}",
+            "Recommendation:": "={{ $json.Recommendation }}",
+            "Insights:": "={{ $json.Insights }}",
+            "Resume uploaded": "={{ $('download binary').item.json.webViewLink }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Contact Information",
+              "displayName": "Contact Information",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hiring_Score:",
+              "displayName": "Hiring_Score:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommendation:",
+              "displayName": "Recommendation:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insights:",
+              "displayName": "Insights:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume uploaded",
+              "displayName": "Resume uploaded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1216,
+        608
+      ],
+      "id": "b3197978-a7ff-47ff-8ef5-94c963bcf0b6",
+      "name": "Interview candidates",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "K0DN3bdKFTC61eIn",
+          "name": "Candiate Resume Reviews"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY",
+          "mode": "list",
+          "cachedResultName": "Candidate Resume reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 461523695,
+          "mode": "list",
+          "cachedResultName": "Review candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit#gid=461523695"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Hiring_Score:": "={{ $json.Hiring_Score }}",
+            "Contact Information": "={{ $json.Contact_Info }}",
+            "Recommendation:": "={{ $json.Recommendation }}",
+            "Insights:": "={{ $json.Insights }}",
+            "Resume uploaded": "={{ $json.Feedback }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Contact Information",
+              "displayName": "Contact Information",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hiring_Score:",
+              "displayName": "Hiring_Score:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommendation:",
+              "displayName": "Recommendation:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insights:",
+              "displayName": "Insights:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume uploaded",
+              "displayName": "Resume uploaded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1216,
+        832
+      ],
+      "id": "da254de6-10d1-4d37-9447-1324dda44f7f",
+      "name": "Review candidates",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "K0DN3bdKFTC61eIn",
+          "name": "Candiate Resume Reviews"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7b35236b-9bfb-4f04-80b7-9e14fb9e04ff",
+                    "leftValue": "={{ $json.Recommendation }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        672
+      ],
+      "id": "1b34f8fd-a4f3-4430-b5ce-023bb1cadb87",
+      "name": "All profile & sort profiles"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Recommendation }}",
+                    "rightValue": "Interview",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "a05a78ea-4b6c-405e-bcfa-9d1071a634ab"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8be1193f-bf58-4f1c-92ce-83876648fa8f",
+                    "leftValue": "={{ $json.Recommendation }}",
+                    "rightValue": "Review",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "184ffba9-b97e-4439-bd8a-89f3050a7074",
+                    "leftValue": "={{ $json.Recommendation }}",
+                    "rightValue": "Reject",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        864
+      ],
+      "id": "e91aec39-58c8-4fdb-82a4-c4988ab0c17f",
+      "name": "Sorting profiles"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY",
+          "mode": "list",
+          "cachedResultName": "Candidate Resume reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "All candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Insights:": "={{ $json.Insights }}",
+            "Recommendation:": "={{  $json.Recommendation }}",
+            "Hiring_Score:": "={{ $json.Hiring_Score }}",
+            "Resume uploaded": "={{ $('download binary').item.json.webViewLink }}",
+            "Contact Information": "={{ $json.Contact_Info }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Contact Information",
+              "displayName": "Contact Information",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hiring_Score:",
+              "displayName": "Hiring_Score:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Recommendation:",
+              "displayName": "Recommendation:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Insights:",
+              "displayName": "Insights:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resume uploaded",
+              "displayName": "Resume uploaded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        384
+      ],
+      "id": "bcf6a088-8a82-4d1a-a7d6-2af5b1e0990e",
+      "name": "All candidates",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "K0DN3bdKFTC61eIn",
+          "name": "Candiate Resume Reviews"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "swarajshelke392@gmail.com",
+        "subject": "Approve this message to forward",
+        "message": "=\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n\nHi {{ $('Webhook').item.json.body.name }},\n\nThank you so much for giving us the opportunity to review your application for the position For:\nAI & Automation specialist - Learning & Design Team. We really appreciate the time and effort you put into sharing your background with us.\n\nAfter carefully reviewing your resume, we have decided not to move forward with your application at this time.\nTo be transparent and helpful, here is the specific feedback from our review team regarding your profile:\n\n{{ $('All profile & sort profiles').item.json.Feedback }}\n\nPlease understand that this decision is specific to our current needs for this role. We encourage you to apply again in the future as you gain more experience in these areas.\n\nWe wish you the very best in your job search and future professional endeavors.\n\nBest regards,\n\nRecruiting Team\nHR TEAM,\nHIREFLOW_ATS\n\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n\nThis is the email which will sended to the rejected candidate...\nonce approved the email will be send to them.\nYou can review their application here:\nhttps://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit?gid=0#gid=0\nThe email will not be send if once dis-approved...\ncandidate info:\n{{ $('All profile & sort profiles').item.json.Contact_Info }}\n",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "disapproveLabel": "Dis-Approved"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        1056
+      ],
+      "id": "8fde17b8-4720-43b7-8bf1-b6ac00f4b8cd",
+      "name": "Confirm rejection message",
+      "webhookId": "29b16a7f-cd13-4197-a4f7-0db35cd4b5b5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UYZ1Un9d3AMyMGb1",
+          "name": "Gmail swaraj 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "HIREFLOW_ATS - Thank you",
+        "message": "=Hi {{ $('Webhook').item.json.body.name }},\n\nThank you so much for giving us the opportunity to review your application for the position For:\nAI & Automation specialist - Learning & Design Team.\nWe really appreciate the time and effort you put into sharing your background with us.\n\nAfter carefully reviewing your resume, we have decided not to move forward with your application at this time.\nTo be transparent and helpful, here is the specific feedback from our review team regarding your profile:\n\n\"{{ $('All profile & sort profiles').item.json.Feedback }}\"\n\nPlease understand that this decision is specific to our current needs for this role. We encourage you to apply again in the future as you gain more experience in these areas.\n\nWe wish you the very best in your job search and future professional endeavors.\n\nBest regards,\n\nRecruiting Team\nHR TEAM,\nHIREFLOW_ATS",
+        "options": {
+          "sendTo": "={{ $('Webhook').item.json.body.email }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        1232
+      ],
+      "id": "c190f6d1-4672-42c9-8672-3ec0f370a04d",
+      "name": "Create a draft",
+      "webhookId": "bd5107ef-b5d2-4d51-9df9-83b616eebede",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UYZ1Un9d3AMyMGb1",
+          "name": "Gmail swaraj 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "76c6b265-0092-45e2-aca6-b7bafa596463",
+              "leftValue": "={{ $json.text.length }}",
+              "rightValue": 100,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -448,
+        672
+      ],
+      "id": "d562402e-b33e-4eca-81df-134d8af0aa3d",
+      "name": "<100 sort"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of items) {\n  if (item.binary && item.binary.data) {\n    // This forces the system to see it as a PNG image\n    item.binary.data.fileName = 'resume.png';\n    item.binary.data.fileExtension = 'png';\n    item.binary.data.mimeType = 'image/png';\n  }\n}\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1088
+      ],
+      "id": "937e72e3-1e1b-4fbf-8cfa-7f1f0e110b03",
+      "name": "Only png"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY",
+          "mode": "list",
+          "cachedResultName": "Candidate Resume reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2066210456,
+          "mode": "list",
+          "cachedResultName": "Rejected candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LzpItjl8p9T9fkENUOMzw2BgbH8lTFK3-HXgCsnyDsY/edit#gid=2066210456"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Insights:": "={{ $json.Insights }}",
+            "Recommendation:": "={{ $json.Recommendation }}",
+            "Hiring_Score:": "={{ $json.Hiring_Score }}",
+            "Contact Information": "={{ $json.Contact_Info }}",
+            "Resume uploaded": "={{ $('download binary').item.json.webViewLink }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Contact Information",
+              "displayName": "Contact Information",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hiring_Score:",
+              "displayName": "Hiring_Score:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommendation:",
+              "displayName": "Recommendation:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insights:",
+              "displayName": "Insights:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume uploaded",
+              "displayName": "Resume uploaded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1216,
+        1056
+      ],
+      "id": "7d47e198-ba9d-48f7-9b0f-631219639d71",
+      "name": "Reject Candidate",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "K0DN3bdKFTC61eIn",
+          "name": "Candiate Resume Reviews"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f420484f-a6eb-44a0-9760-7eeeab501cd8",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        1056
+      ],
+      "id": "486d169d-8ced-43d0-80f4-547c4bd7457e",
+      "name": "Approve or disapprove"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1216
+      ],
+      "id": "5c2e0afc-bc08-4fec-b14e-e6c3e5dfc09d",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "zIEhPVGfK1pbN5F3",
+          "name": "Groq api"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "localhost:5678",
+            "connection": "keep-alive",
+            "content-length": "132910",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+            "sec-ch-ua": "\"Not:A-Brand\";v=\"99\", \"Google Chrome\";v=\"145\", \"Chromium\";v=\"145\"",
+            "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryUf1Nhbv4ochLH96g",
+            "sec-ch-ua-mobile": "?0",
+            "accept": "*/*",
+            "origin": "http://localhost:3000",
+            "sec-fetch-site": "same-site",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://localhost:3000/",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "name": "Rudra Kulkarni",
+            "phone": "+91 4984984498",
+            "email": "rudrakulkarni54@gmail.com"
+          },
+          "webhookUrl": "http://localhost:5678/webhook-test/hireflow-apply",
+          "executionMode": "test"
+        },
+        "binary": {
+          "resume": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "Dinesh-Kadam-FlowCV-Resume-20250718.pdf",
+            "id": "filesystem-v2:workflows/oQUFPOjSAEekLwup/executions/temp/binary_data/1bb30eee-4c69-4626-b86d-e53d7bd9c957",
+            "fileSize": "132 kB"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent for PDF reviews": {
+      "main": [
+        [
+          {
+            "node": "Final fields to add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pdf or not?": {
+      "main": [
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Only png",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent for image": {
+      "main": [
+        [
+          {
+            "node": "Final fields to add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image analyze": {
+      "main": [
+        [
+          {
+            "node": "Agent for image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "<100 sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent for PDF reviews",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Normalize the text of gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize the text": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize the text of gemini": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Agent for PDF reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final fields to add": {
+      "main": [
+        [
+          {
+            "node": "All profile & sort profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "download binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "download binary": {
+      "main": [
+        [
+          {
+            "node": "Pdf or not?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All profile & sort profiles": {
+      "main": [
+        [
+          {
+            "node": "All candidates",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sorting profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sorting profiles": {
+      "main": [
+        [
+          {
+            "node": "Interview candidates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Review candidates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm rejection message": {
+      "main": [
+        [
+          {
+            "node": "Approve or disapprove",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All candidates": {
+      "main": [
+        []
+      ]
+    },
+    "<100 sort": {
+      "main": [
+        [
+          {
+            "node": "Normalize the text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only png": {
+      "main": [
+        [
+          {
+            "node": "Image analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject Candidate": {
+      "main": [
+        [
+          {
+            "node": "Confirm rejection message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approve or disapprove": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent for image",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "16866209-cd85-4582-bacf-3399124d056c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ede2a1723ff2c9a76eefabde4eb2ad1dd03725eba54d7dc23a2039bda2e2dc3e"
+  },
+  "id": "oQUFPOjSAEekLwup",
+  "tags": []
+}
