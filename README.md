@@ -13,12 +13,12 @@
   </p>
 </div>
 
-## 🤯 What the Heck is HireFlow?
+## 🤯 What is HireFlow?
 **HireFlow** is an absolute powerhouse of an intelligent recruitment automation platform. It completely obliterates manual screening by using Large Language Models (LLMs) and Optical Character Recognition (OCR) to rip text from resumes, ruthlessly score candidates on semantic fit, and automate all the boring communication. 
 
 You drop a resume in, and the AI brain takes over. 🧠⚡
 
-## ✨ Crazy Ahh Features
+## ✨ Functions & Features 
 * 🌌 **3D God-Mode UI:** A visually stunning application portal built with Next.js 14, Tailwind CSS, and Spline 3D (`@splinetool/react-spline`) that makes uploading resumes feel like a literal video game. 
 * 📄 **Universal Resume Shredder (Parsing):** Automatically extracts text from both PDFs and Scanned Images using specialized AI agents. 
 * ⚖️ **Savage AI Scoring Engine:** Evaluates candidates from 0 to 100 based on Technical Proficiency, Communication & Design Sense, and Builder Mindset using Google Gemini and Groq (Llama 3).
@@ -40,7 +40,7 @@ You drop a resume in, and the AI brain takes over. 🧠⚡
 * **AI Vision Model:** Google Gemini 1.5 Pro (Extracting text from images/PDFs like a champ)
 * **Decision LLM:** Llama 3 / GPT-OSS-20b via Groq (For hyper-fast, logical resume scoring)
 * **Database:** Real-time Google Sheets Syncing
-* **Comms:** Automated customized HTML templates via Gmail SMTP
+* **Comms:** Automated customized HTML templates via Gmail/SMTP
 
 ## ⚙️ How the Magic Actually Happens
 1. **Candidate Uploads:** User drags and drops their resume into the highly-interactive frontend portal.
